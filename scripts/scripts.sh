@@ -4,9 +4,8 @@ set -e
 
 printf "\n[-] Installing base OS dependencies...\n\n"
 
-apt-get update -y
-
-apt-get install -y --no-install-recommends \
+apt-get update -y \
+&& apt-get install -y --no-install-recommends \
     build-essential \
     bsdtar \
     bzip2 \
@@ -16,7 +15,8 @@ apt-get install -y --no-install-recommends \
     graphicsmagick \
     graphicsmagick-imagemagick-compat \
     python \
-    wget
+    wget \
+&& rm -rf /var/lib/apt/lists/*
 
 # Install gosu to build and run the app as a non-root user
 # https://github.com/tianon/gosu
@@ -56,33 +56,6 @@ mv ${NODE_DIST} /opt/nodejs
 
 ln -sf /opt/nodejs/bin/node /usr/local/bin/node
 ln -sf /opt/nodejs/bin/npm /usr/local/bin/npm
-
-################################
-# install-mongo
-################################
-if [ "$INSTALL_MONGO" = true ]; then
-  printf "\n[-] Installing MongoDB ${MONGO_VERSION}...\n\n"
-
-  apt-key adv --keyserver ha.pool.sks-keyservers.net --recv-keys 0C49F3730359A14518585931BC711F9BA15703C6
-
-  echo "deb http://repo.mongodb.org/apt/debian jessie/mongodb-org/$MONGO_MAJOR main" > /etc/apt/sources.list.d/mongodb-org.list
-
-  apt-get update
-
-  apt-get install -y \
-    mongodb-org=$MONGO_VERSION \
-    mongodb-org-server=$MONGO_VERSION \
-    mongodb-org-shell=$MONGO_VERSION \
-    mongodb-org-mongos=$MONGO_VERSION \
-    mongodb-org-tools=$MONGO_VERSION \
-
-  mkdir -p /data/{db,configdb}
-  chown -R mongodb:mongodb /data/{db,configdb}
-
-  rm -rf /var/lib/apt/lists/*
-  rm -rf /var/lib/mongodb
-  mv /etc/mongod.conf /etc/mongod.conf.orig
-fi
 
 ################################
 # install-phantomjs
@@ -171,43 +144,3 @@ mv $BUILD_SCRIPTS_DIR/entrypoint.sh $APP_BUNDLE_DIR/bundle/entrypoint.sh
 
 # change ownership of the app to the node user
 chown -R node:node $APP_BUNDLE_DIR
-
-################################
-# final cleanup
-################################
-printf "\n[-] Performing final cleanup...\n\n"
-
-# get out of the src dir, so we can delete it
-cd $APP_BUNDLE_DIR
-
-# Clean out docs
-rm -rf /usr/share/{doc,doc-base,man,locale,zoneinfo}
-
-# Clean out package management dirs
-rm -rf /var/lib/{cache,log}
-
-# remove app source
-rm -rf $APP_SOURCE_DIR
-
-# remove meteor
-rm -rf /usr/local/bin/meteor
-rm -rf /root/.meteor
-
-# clean additional files created outside the source tree
-rm -rf /root/{.npm,.cache,.config,.cordova,.local}
-rm -rf /tmp/*
-
-# npm cleanup
-npm uninstall -g reaction-cli
-rm /usr/local/bin/reaction
-rm /opt/nodejs/bin/npm
-rm /usr/local/bin/npm
-rm -rf /opt/nodejs/lib/node_modules/npm/
-
-# remove os dependencies
-apt-get purge -y --auto-remove build-essential bsdtar bzip2 curl git python
-apt-get -y autoremove
-apt-get -y clean
-apt-get -y autoclean
-rm -rf /var/lib/apt/lists/*
-
