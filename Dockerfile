@@ -33,8 +33,6 @@ RUN apt-get update -y \
       ca-certificates \
       curl \
       git \
-      graphicsmagick \
-      graphicsmagick-imagemagick-compat \
       python \
       wget \
  && rm -rf /var/lib/apt/lists/*
