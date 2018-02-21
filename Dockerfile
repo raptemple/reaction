@@ -1,10 +1,7 @@
-FROM debian:jessie
+FROM node:8.9
 MAINTAINER Reaction Commerce <admin@reactioncommerce.com>
 
-RUN groupadd -r node && useradd -m -g node node
-
 # Define all --build-arg options
-ARG NODE_VERSION=8.9.0
 ARG INSTALL_PHANTOMJS
 ARG TOOL_NODE_FLAGS=--max-old-space-size=2048
 ARG METEOR_VERSION=1.6.0.1
@@ -21,7 +18,6 @@ ENV METEOR_ALLOW_SUPERUSER=true
 ENV METEOR_VERSION $METEOR_VERSION
 ENV PHANTOM_JS=phantomjs-$PHANTOM_VERSION-linux-x86_64
 
-ENV NODE_VERSION $NODE_VERSION
 ENV INSTALL_PHANTOMJS $INSTALL_PHANTOMJS
 ENV TOOL_NODE_FLAGS $TOOL_NODE_FLAGS
 
@@ -55,19 +51,6 @@ RUN dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')" \
  && chmod +x /usr/local/bin/gosu \
  && gosu nobody true
 
-# install-node
-# todo: Consider a node base image
-RUN printf "\n[-] Installing Node ${NODE_VERSION}...\n\n" \
- && NODE_DIST=node-v${NODE_VERSION}-linux-x64 \
- && cd /tmp \
- && curl -O -L http://nodejs.org/dist/v${NODE_VERSION}/${NODE_DIST}.tar.gz \
- && tar xvzf ${NODE_DIST}.tar.gz \
- && rm ${NODE_DIST}.tar.gz \
- && rm -rf /opt/nodejs \
- && mv ${NODE_DIST} /opt/nodejs \
- && ln -sf /opt/nodejs/bin/node /usr/local/bin/node \
- && ln -sf /opt/nodejs/bin/npm /usr/local/bin/npm
-
 # install-phantomjs
 RUN printf "\n[-] Installing Phantom.js...\n\n" \
  && apt-get update \
@@ -93,8 +76,7 @@ RUN curl https://install.meteor.com -o /tmp/install_meteor.sh \
  && sh /tmp/install_meteor.sh \
  && rm /tmp/install_meteor.sh
 
-RUN npm i -g reaction-cli \
- && ln -sf /opt/nodejs/bin/reaction /usr/local/bin/reaction
+RUN npm i -g reaction-cli
 
 COPY . $APP_SOURCE_DIR
 WORKDIR $APP_SOURCE_DIR
